@@ -5,7 +5,7 @@
 #include <string.h>
 #include <unistd.h>
 
-
+void sensor_app_init();
 
 #endif
 
