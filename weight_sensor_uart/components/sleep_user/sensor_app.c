@@ -10,18 +10,24 @@
 
 #include "sensor_app.h"
 #include "uart_dev.h"
-
+static const char *TAG = "sensor_app";
 TaskHandle_t sensor_app_task_Handle;
-void sensor_app_read_weight(void){
-    uint8_t data[12];
-    uint8_t set_param[5];
-    uart_dev_send(set_param,9);
-    // uint16_t buf_len = uart_dev_recive(data,5,500);
-    // ESP_LOG_BUFFER_HEX("setting_sensor_return",data,buf_len);
-}
-uint8_t senser_cmd[][10] = {
-    {0xf1,0xf2,0xf3,0xf4,0xf5}
+uint8_t senser_cmd[][5] = {
+    {0xa3,0x00,0xa2,0xa4,0xa5}
 };
+int sensor_app_read_weight(void){
+    uint8_t data[12];
+    uart_dev_send(senser_cmd[0],5);
+    uint16_t buf_len = uart_dev_recive(data,10,500);
+    ESP_LOG_BUFFER_HEX("setting_sensor_return",data,buf_len);
+    int weight = data[4]<<16 | data[5]<<8 | data[6];
+    if (data[3]==0x01){
+        weight *= -1; 
+    }
+    ESP_LOGI(TAG,"weight:%d",weight);
+    return weight;
+}
+
  void sensor_app_task(void *arg){
     while (1){
         sensor_app_read_weight();

@@ -97,7 +97,7 @@ static void uart_event_task(void *pvParameters)
 void uart_dev_init(void) {
    esp_log_level_set(TAG, ESP_LOG_INFO);
    const uart_config_t uart_config = {
-      .baud_rate = 115200,//19200,
+      .baud_rate = 9600,//19200,
       .data_bits = UART_DATA_8_BITS,
       .parity = UART_PARITY_DISABLE,
       .stop_bits = UART_STOP_BITS_1,
