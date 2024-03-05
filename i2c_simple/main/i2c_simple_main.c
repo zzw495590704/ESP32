@@ -30,10 +30,10 @@ static const char *TAG = "i2c-simple-example";
 #define I2C_MASTER_RX_BUF_DISABLE   0                          /*!< I2C master doesn't need buffer */
 #define I2C_MASTER_TIMEOUT_MS       1000
 
-#define AS600_SENSOR_ADDR                 0x36        /*!< Slave address of the MPU9250 sensor */
-#define AS5600_ANGLE_H           0x0e        /*!< Register addresses of the "who am I" register */
+#define AS600_SENSOR_ADDR                 0x36        
+#define AS5600_ANGLE_H           0x0e      
 #define AS5600_ANGLE_L           0x0f
-#define AS5600_MAX_VALUE        4096
+#define AS5600_MAX_VALUE         4096
 
 enum AS5600_DIR_ENUM{
     AS5600_STOP = 0,

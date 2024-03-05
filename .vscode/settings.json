@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "as5600_app.h": "c",
+        "as5600_dev.h": "c"
+    }
+}
