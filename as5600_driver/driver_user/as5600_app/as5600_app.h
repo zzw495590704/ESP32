@@ -8,16 +8,16 @@
 extern "C" {
 #endif
 
-#define TXD_PIN (GPIO_NUM_6)
-#define RXD_PIN (GPIO_NUM_7)
-
-enum AS5600_DIR_ENUM{
-    AS5600_STOP = 0,
-    AS5600_TURN_N = 1,
-    AS5600_TURN_P = 2,
-    AS5600_TURN_N_OVER = 3,
-    AS5600_TURN_P_OVER = 4,
-};
+typedef struct 
+{
+    uint16_t value;
+    uint16_t init_value;
+    uint16_t last_value;
+    uint8_t direction;
+    int circle;
+    float angle;
+    float totol_angle;
+}as5600_data;
 
 void as5600_app_init();
 

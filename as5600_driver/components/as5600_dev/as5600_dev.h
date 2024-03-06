@@ -13,7 +13,23 @@
 
 #include "driver/i2c.h"
 
-esp_err_t as5600_dev_init(int SDA_IO,int SCL_IO,i2c_port_t i2c_master_port);
-esp_err_t as5600_dev_read(i2c_port_t i2c_master_port, uint8_t reg_addr, uint8_t *data, size_t len);
+enum AS5600_DIR_ENUM{
+    AS5600_STOP = 0,
+    AS5600_TURN_N = 1,
+    AS5600_TURN_P = 2,
+    AS5600_TURN_N_OVER = 3,
+    AS5600_TURN_P_OVER = 4,
+};
+typedef struct 
+{
+    int i2c_port;
+    int SDA_IO;
+    int SCL_IO;
+}as5600_dev;
+
+
+void as5600_dev_init();
+uint16_t as5600_dev_iic0_read();
+uint16_t as5600_dev_iic1_read();
 #endif
 
