@@ -32,22 +32,24 @@ TaskHandle_t as5600_app_task_Handle;
 #define AS5600_ANGLE_L           0x0f
 #define AS5600_MAX_VALUE         4096
 
-
+#define ORIGIN_COORDINATES_X     2627
+#define ORIGIN_COORDINATES_Y     1028
+#define RESOLUTION_RATIO         255.85
 static as5600_data as5600_data0,as5600_data1;
-static int as5600_circle=0;
 uint16_t as5600_value,as5600_last_value0,as5600_last_value1,as5600_init_value0,as5600_init_value1;
 int as5600_dir,as5600_diff;
 float as5600_angle,as5600_total_angle;
 
-// uint16_t as5600_get_value(i2c_port_t i2c_master_port){
-//     uint16_t result = 0;
-//     uint8_t data[2];
-//     as5600_dev_read(I2C_MASTER_NUM0,AS5600_ANGLE_H, &data[0], 1);
-//     as5600_dev_read(I2C_MASTER_NUM0,AS5600_ANGLE_L, &data[1], 1);
-//     // ESP_LOG_BUFFER_HEX(TAG,data,2);
-//     result=(uint16_t)(data[0]<<8|data[1]); //一共就11位 注意
-//     return result;
-// }
+static struct nozzle
+{
+    //绝对坐标
+    int x; 
+    int y;
+    //累计变化量
+    int delta_x;
+    int delta_y;
+};
+
 float as5600_get_angle(uint16_t value){
     float angle;
     angle=((int) value & 0b0000111111111111)*360.0/4096.0;
@@ -97,23 +99,29 @@ float as5600_get_total_angle(uint16_t value,int circle){
     float angle = as5600_get_angle(value);
     return (float)circle*360+angle;
 }
-
-
+int as5600_get_total_value(uint16_t value,int circle){
+    return (int)circle*4096+value;
+}
 void as5600_app_dev_measure(as5600_data *data){
     data->angle = as5600_get_angle(data->value);
     data->direction = as5600_get_dir(data->value - data->last_value);
     data->circle = as5600_get_circle(data->direction,data->circle);
     data->totol_angle = as5600_get_total_angle(data->value-data->init_value,data->circle);
+    data->total_value = as5600_get_total_value(data->value-data->init_value,data->circle);
     data->last_value = data->value;
     // ESP_LOGI(TAG, "angle:%f dir:%d circle:%d total:%.2f",data->angle,data->direction,data->circle,data->totol_angle);
 }
 void as5600_app_monitor(as5600_data data0, as5600_data data1){
-    ESP_LOGI(TAG, "angle:%f dir:%d circle:%d total:%.2f  |  angle:%f dir:%d circle:%d total:%.2f" 
-        ,data0.angle,data0.direction,data0.circle,data0.totol_angle
-        ,data1.angle,data1.direction,data1.circle,data1.totol_angle);
+    ESP_LOGI(TAG, "angle:%f dir:%d circle:%d value:%d  |  angle:%f dir:%d circle:%d value:%d" 
+        ,data0.angle,data0.direction,data0.circle,data0.value
+        ,data1.angle,data1.direction,data1.circle,data1.value);
+}
+void as5600_app_get_coordinate(){
+    int delta_A = as5600_data0.value - as5600_data0.last_value - ORIGIN_COORDINATES_X;
+    int delat_B = as5600_data1.value - as5600_data1.last_value - ORIGIN_COORDINATES_Y;
+    // nozzle.x = nozzle.x - (delat_A + delat_B) / 
 }
 void as5600_app_task(void *arg){
-    uint8_t data[2];
     as5600_data0.init_value = as5600_dev_iic0_read();
     as5600_data1.init_value = as5600_dev_iic1_read();
     while (1){
@@ -121,7 +129,9 @@ void as5600_app_task(void *arg){
         as5600_data1.value = as5600_dev_iic1_read();
         as5600_app_dev_measure(&as5600_data0);
         as5600_app_dev_measure(&as5600_data1);
-        as5600_app_monitor(as5600_data0,as5600_data1);
+        printf("value0:%d,total0:%d,value1:%d,total1:%d\n",
+        as5600_data0.value,as5600_data0.total_value,as5600_data1.value,as5600_data1.total_value);
+        // as5600_app_monitor(as5600_data0,as5600_data1);
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }

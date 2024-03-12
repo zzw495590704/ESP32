@@ -137,12 +137,14 @@ float as5600_get_total_angle(uint16_t value,int circle){
     float angle = as5600_get_angle(value);
     return (float)circle*360+angle;
 }
-
+int as5600_get_total_value(uint16_t value,int circle){
+    return (int)circle*4096+value;
+}
 void app_main(void)
 {
     uint8_t data[2];
     uint16_t as5600_value,as5600_value_last;
-    int as5600_dir,as5600_diff;
+    int as5600_dir,as5600_diff,as5600_total_value;
     float as5600_angle,as5600_total_angle;
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "AS5600 I2C initialized successfully");
@@ -161,9 +163,10 @@ void app_main(void)
         as5600_diff = as5600_value - as5600_value_last;
         as5600_dir = as5600_get_dir(as5600_diff);
         as5600_get_circle(as5600_dir);
-        as5600_total_angle = as5600_get_total_angle(as5600_value,as5600_circle);
+        as5600_total_value = as5600_get_total_value(as5600_value,as5600_circle);
         as5600_value_last = as5600_value;
-        ESP_LOGI(TAG, "diff:%d angle:%f dir:%d circle:%d total:%.2f",as5600_diff,as5600_angle,as5600_dir,as5600_circle,as5600_total_angle);
+        printf("%d,%d\n",as5600_value,as5600_total_value);
+        // ESP_LOGI(TAG, "diff:%d angle:%f dir:%d circle:%d total:%.2f",as5600_diff,as5600_angle,as5600_dir,as5600_circle,as5600_total_angle);
         vTaskDelay(50 / portTICK_PERIOD_MS);
     }
 }

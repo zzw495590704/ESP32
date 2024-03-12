@@ -14,6 +14,7 @@ typedef struct
     uint16_t init_value;
     uint16_t last_value;
     uint8_t direction;
+    int total_value;
     int circle;
     float angle;
     float totol_angle;
