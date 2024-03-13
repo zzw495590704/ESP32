@@ -32,23 +32,23 @@ TaskHandle_t as5600_app_task_Handle;
 #define AS5600_ANGLE_L           0x0f
 #define AS5600_MAX_VALUE         4096
 
-#define ORIGIN_COORDINATES_X     2627
-#define ORIGIN_COORDINATES_Y     1028
+#define ORIGIN_COORDINATES_X     335
+#define ORIGIN_COORDINATES_Y     1866
 #define RESOLUTION_RATIO         255.85
 static as5600_data as5600_data0,as5600_data1;
 uint16_t as5600_value,as5600_last_value0,as5600_last_value1,as5600_init_value0,as5600_init_value1;
 int as5600_dir,as5600_diff;
 float as5600_angle,as5600_total_angle;
 
-static struct nozzle
+static struct Nozzle
 {
     //绝对坐标
-    int x; 
-    int y;
+    double x; 
+    double y;
     //累计变化量
-    int delta_x;
-    int delta_y;
-};
+    int delta_A;
+    int delta_B;
+}nozzle;
 
 float as5600_get_angle(uint16_t value){
     float angle;
@@ -102,37 +102,56 @@ float as5600_get_total_angle(uint16_t value,int circle){
 int as5600_get_total_value(uint16_t value,int circle){
     return (int)circle*4096+value;
 }
+
 void as5600_app_dev_measure(as5600_data *data){
     data->angle = as5600_get_angle(data->value);
     data->direction = as5600_get_dir(data->value - data->last_value);
     data->circle = as5600_get_circle(data->direction,data->circle);
-    data->totol_angle = as5600_get_total_angle(data->value-data->init_value,data->circle);
-    data->total_value = as5600_get_total_value(data->value-data->init_value,data->circle);
+    
+    // data->totol_angle = as5600_get_total_angle(data->value,data->circle);
+    data->total_value = as5600_get_total_value(data->value,data->circle);
     data->last_value = data->value;
+
     // ESP_LOGI(TAG, "angle:%f dir:%d circle:%d total:%.2f",data->angle,data->direction,data->circle,data->totol_angle);
 }
-void as5600_app_monitor(as5600_data data0, as5600_data data1){
-    ESP_LOGI(TAG, "angle:%f dir:%d circle:%d value:%d  |  angle:%f dir:%d circle:%d value:%d" 
-        ,data0.angle,data0.direction,data0.circle,data0.value
-        ,data1.angle,data1.direction,data1.circle,data1.value);
+void as5600_app_monitor(){
+    ESP_LOGI(TAG,"%d,%d,%d,%d|||%d,%d,%f,%f"
+            ,as5600_data0.total_value,as5600_data0.last_total_value
+            ,as5600_data1.total_value,as5600_data1.last_total_value
+            ,nozzle.delta_A,nozzle.delta_B,nozzle.x,nozzle.y);
 }
-void as5600_app_get_coordinate(){
-    int delta_A = as5600_data0.value - as5600_data0.last_value - ORIGIN_COORDINATES_X;
-    int delat_B = as5600_data1.value - as5600_data1.last_value - ORIGIN_COORDINATES_Y;
-    // nozzle.x = nozzle.x - (delat_A + delat_B) / 
+void as5600_app_vofa_monitor(){
+    printf("%f,%f\n",nozzle.x,nozzle.y);
+}
+void as5600_app_get_coordinate(as5600_data *data0, as5600_data *data1){
+    data0->relative_total_value = data0->total_value - data0->init_total_value;
+    data1->relative_total_value = data1->total_value - data1->init_total_value;
+
+    nozzle.delta_A = data0->relative_total_value - data0->last_total_value;
+    nozzle.delta_B = data1->relative_total_value - data1->last_total_value;
+    nozzle.x = nozzle.x - (nozzle.delta_A + nozzle.delta_B)/RESOLUTION_RATIO;
+    nozzle.y = nozzle.y - (nozzle.delta_A - nozzle.delta_B)/RESOLUTION_RATIO;
+    data0->last_total_value = data0->relative_total_value;
+    data1->last_total_value = data1->relative_total_value;
 }
 void as5600_app_task(void *arg){
     as5600_data0.init_value = as5600_dev_iic0_read();
+    as5600_data0.init_total_value = ORIGIN_COORDINATES_X;
     as5600_data1.init_value = as5600_dev_iic1_read();
+    as5600_data1.init_total_value = ORIGIN_COORDINATES_Y;
     while (1){
         as5600_data0.value = as5600_dev_iic0_read();
         as5600_data1.value = as5600_dev_iic1_read();
         as5600_app_dev_measure(&as5600_data0);
         as5600_app_dev_measure(&as5600_data1);
-        printf("value0:%d,total0:%d,value1:%d,total1:%d\n",
-        as5600_data0.value,as5600_data0.total_value,as5600_data1.value,as5600_data1.total_value);
-        // as5600_app_monitor(as5600_data0,as5600_data1);
-        vTaskDelay(50 / portTICK_PERIOD_MS);
+        as5600_app_get_coordinate(&as5600_data0,&as5600_data1);
+        as5600_app_monitor();
+        // printf("as5600:%d,%d,%d,%d\n",
+        // as5600_data0.value,as5600_data1.value,as5600_data0.total_value,as5600_data1.total_value);
+        // printf("value0:%d,total0:%d,value1:%d,total1:%d\n",
+        // as5600_data0.value,as5600_data0.total_value,as5600_data1.value,as5600_data1.total_value);
+        as5600_app_monitor(as5600_data0,as5600_data1);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
 
