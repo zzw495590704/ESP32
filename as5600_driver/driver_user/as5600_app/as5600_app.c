@@ -99,8 +99,8 @@ float as5600_get_total_angle(uint16_t value,int circle){
     float angle = as5600_get_angle(value);
     return (float)circle*360+angle;
 }
-int as5600_get_total_value(uint16_t value,int circle){
-    return (int)circle*4096+value;
+int as5600_get_total_value(uint16_t value,int circle, uint16_t init_total){
+    return (int)circle*4096+value - init_total;
 }
 
 void as5600_app_dev_measure(as5600_data *data){
@@ -109,23 +109,30 @@ void as5600_app_dev_measure(as5600_data *data){
     data->circle = as5600_get_circle(data->direction,data->circle);
     
     // data->totol_angle = as5600_get_total_angle(data->value,data->circle);
-    data->total_value = as5600_get_total_value(data->value,data->circle);
+    data->total_value = as5600_get_total_value(data->value,data->circle,data->init_total_value);
     data->last_value = data->value;
 
     // ESP_LOGI(TAG, "angle:%f dir:%d circle:%d total:%.2f",data->angle,data->direction,data->circle,data->totol_angle);
 }
 void as5600_app_monitor(){
-    ESP_LOGI(TAG,"%d,%d,%d,%d|||%d,%d,%f,%f"
-            ,as5600_data0.total_value,as5600_data0.last_total_value
-            ,as5600_data1.total_value,as5600_data1.last_total_value
-            ,nozzle.delta_A,nozzle.delta_B,nozzle.x,nozzle.y);
+    // ESP_LOGI(TAG,"%d,%d,%d,%d|||%d,%d,%f,%f"
+    //         ,as5600_data0.total_value,as5600_data0.last_total_value
+    //         ,as5600_data1.total_value,as5600_data1.last_total_value
+    //         ,nozzle.delta_A,nozzle.delta_B,nozzle.x,nozzle.y);
+    ESP_LOGI(TAG,"%d,%d,%d,%d|||%d,%d,%d,%d    ||%f,%f"
+            ,as5600_data0.value,as5600_data0.total_value,as5600_data0.direction,as5600_data0.circle
+            ,as5600_data1.value,as5600_data1.total_value,as5600_data1.direction,as5600_data1.circle
+            ,nozzle.x,nozzle.y);
 }
 void as5600_app_vofa_monitor(){
-    printf("%f,%f\n",nozzle.x,nozzle.y);
+    printf("%d,%d,%d,%d,%f,%f\n"
+    ,as5600_data0.value,as5600_data0.total_value
+    ,as5600_data1.value,as5600_data1.total_value
+    ,nozzle.x,nozzle.y);
 }
 void as5600_app_get_coordinate(as5600_data *data0, as5600_data *data1){
-    data0->relative_total_value = data0->total_value - data0->init_total_value;
-    data1->relative_total_value = data1->total_value - data1->init_total_value;
+    data0->relative_total_value = data0->total_value;
+    data1->relative_total_value = data1->total_value;
 
     nozzle.delta_A = data0->relative_total_value - data0->last_total_value;
     nozzle.delta_B = data1->relative_total_value - data1->last_total_value;
@@ -135,22 +142,27 @@ void as5600_app_get_coordinate(as5600_data *data0, as5600_data *data1){
     data1->last_total_value = data1->relative_total_value;
 }
 void as5600_app_task(void *arg){
-    as5600_data0.init_value = as5600_dev_iic0_read();
-    as5600_data0.init_total_value = ORIGIN_COORDINATES_X;
-    as5600_data1.init_value = as5600_dev_iic1_read();
-    as5600_data1.init_total_value = ORIGIN_COORDINATES_Y;
+    as5600_data0.last_value = as5600_dev_iic0_read();
+    as5600_data0.init_total_value = as5600_data0.last_value;
+    as5600_data1.last_value = as5600_dev_iic1_read();
+    as5600_data1.init_total_value = as5600_data1.last_value;
+    nozzle.x = 0;
+    nozzle.y = 0;
+    ESP_LOGW(TAG,"init:init_value:%d,%d init_total_value:%d,%d"
+                ,as5600_data0.init_value,as5600_data1.init_value
+                ,as5600_data0.init_total_value,as5600_data1.init_total_value);
     while (1){
         as5600_data0.value = as5600_dev_iic0_read();
         as5600_data1.value = as5600_dev_iic1_read();
         as5600_app_dev_measure(&as5600_data0);
         as5600_app_dev_measure(&as5600_data1);
         as5600_app_get_coordinate(&as5600_data0,&as5600_data1);
-        as5600_app_monitor();
+        // as5600_app_monitor();
+        as5600_app_vofa_monitor();
         // printf("as5600:%d,%d,%d,%d\n",
         // as5600_data0.value,as5600_data1.value,as5600_data0.total_value,as5600_data1.total_value);
         // printf("value0:%d,total0:%d,value1:%d,total1:%d\n",
         // as5600_data0.value,as5600_data0.total_value,as5600_data1.value,as5600_data1.total_value);
-        as5600_app_monitor(as5600_data0,as5600_data1);
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
