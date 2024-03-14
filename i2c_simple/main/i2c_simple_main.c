@@ -18,6 +18,7 @@
 */
 #include <stdio.h>
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "driver/i2c.h"
 
 static const char *TAG = "i2c-simple-example";
@@ -146,6 +147,7 @@ void app_main(void)
     uint16_t as5600_value,as5600_value_last;
     int as5600_dir,as5600_diff,as5600_total_value;
     float as5600_angle,as5600_total_angle;
+    int64_t as5600_time;
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "AS5600 I2C initialized successfully");
 
@@ -156,6 +158,7 @@ void app_main(void)
     while (1)
     {
         // ReadAngle();
+        as5600_time = esp_timer_get_time();
         as5600_register_read(AS5600_ANGLE_H, &data[0], 1);
         as5600_register_read(AS5600_ANGLE_L, &data[1], 1);
         as5600_value = as5600_get_value(&data);
@@ -165,8 +168,8 @@ void app_main(void)
         as5600_get_circle(as5600_dir);
         as5600_total_value = as5600_get_total_value(as5600_value,as5600_circle);
         as5600_value_last = as5600_value;
-        printf("%d,%d\n",as5600_value,as5600_total_value);
+        printf("%lld,%d,%d\n",as5600_time,as5600_value,as5600_total_value);
         // ESP_LOGI(TAG, "diff:%d angle:%f dir:%d circle:%d total:%.2f",as5600_diff,as5600_angle,as5600_dir,as5600_circle,as5600_total_angle);
-        vTaskDelay(50 / portTICK_PERIOD_MS);
+        vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 }
