@@ -19,7 +19,6 @@ typedef struct
     int total_value;
     int last_total_value;
     int init_total_value;
-    int relative_total_value;
     int circle;
     //角度换算
     float angle;
