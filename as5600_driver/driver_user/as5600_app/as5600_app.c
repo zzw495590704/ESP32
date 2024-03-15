@@ -130,15 +130,12 @@ void as5600_app_vofa_monitor(){
     ,nozzle.x,nozzle.y);
 }
 void as5600_app_get_coordinate(as5600_data *data0, as5600_data *data1){
-    data0->relative_total_value = data0->total_value;
-    data1->relative_total_value = data1->total_value;
-
-    nozzle.delta_A = data0->relative_total_value - data0->last_total_value;
-    nozzle.delta_B = data1->relative_total_value - data1->last_total_value;
+    nozzle.delta_A = data0->total_value - data0->last_total_value;
+    nozzle.delta_B = data1->total_value - data1->last_total_value;
     nozzle.x = nozzle.x - (nozzle.delta_A + nozzle.delta_B)/RESOLUTION_RATIO;
     nozzle.y = nozzle.y - (nozzle.delta_A - nozzle.delta_B)/RESOLUTION_RATIO;
-    data0->last_total_value = data0->relative_total_value;
-    data1->last_total_value = data1->relative_total_value;
+    data0->last_total_value = data0->total_value;
+    data1->last_total_value = data1->total_value;
 }
 void as5600_app_task(void *arg){
     as5600_data0.last_value = as5600_dev_iic0_read();

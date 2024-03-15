@@ -1,4 +1,1 @@
-/i2c_simple/build
-/HX711_IDF/build
-/weight_sensor_uart/build
-/as5600_driver/build
+build
