@@ -46,6 +46,19 @@ enum AS5600_DIR_ENUM{
 
 static int as5600_circle=0;
 
+
+/************************算法层************************************/
+// 定义线性模型的系数和截距
+double coefficient = 5.85353152e-06;
+double intercept = -0.0742029745713122;
+
+// 定义函数来预测值
+double predict(double x) {
+    return coefficient * x + intercept;
+}
+/*****************************************************************/
+
+
 /**
  * @brief Read a sequence of bytes from a MPU9250 sensor registers
  */
@@ -148,6 +161,7 @@ void app_main(void)
     int as5600_dir,as5600_diff,as5600_total_value;
     float as5600_angle,as5600_total_angle;
     int64_t as5600_time;
+    double as5600_weight;
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "AS5600 I2C initialized successfully");
 
@@ -168,7 +182,8 @@ void app_main(void)
         as5600_get_circle(as5600_dir);
         as5600_total_value = as5600_get_total_value(as5600_value,as5600_circle);
         as5600_value_last = as5600_value;
-        printf("%lld,%d,%d\n",as5600_time,as5600_value,as5600_total_value);
+        as5600_weight = predict(as5600_total_value);
+        printf("%lld,%d,%d,%f\n",as5600_time,as5600_value,as5600_total_value,as5600_weight);
         // ESP_LOGI(TAG, "diff:%d angle:%f dir:%d circle:%d total:%.2f",as5600_diff,as5600_angle,as5600_dir,as5600_circle,as5600_total_angle);
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
