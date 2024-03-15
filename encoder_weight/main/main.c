@@ -59,6 +59,19 @@ double predict(double x) {
 /*****************************************************************/
 
 
+
+/************************算法层************************************/
+// 定义线性模型的系数和截距
+double coefficient = 5.85353152e-06;
+double intercept = -0.0742029745713122;
+
+// 定义函数来预测值
+double predict(double x) {
+    return coefficient * x + intercept;
+}
+/*****************************************************************/
+
+
 /**
  * @brief Read a sequence of bytes from a MPU9250 sensor registers
  */
@@ -161,6 +174,7 @@ void app_main(void)
     int as5600_dir,as5600_diff,as5600_total_value;
     float as5600_angle,as5600_total_angle;
     int64_t as5600_time;
+    double as5600_weight;
     double as5600_weight;
     ESP_ERROR_CHECK(i2c_master_init());
     ESP_LOGI(TAG, "AS5600 I2C initialized successfully");
