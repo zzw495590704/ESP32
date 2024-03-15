@@ -13,7 +13,7 @@
 #include "freertos/stream_buffer.h"
 #include "driver/uart.h"
 #include "esp_log.h"
-
+#include "esp_timer.h"
 #include "as5600_dev.h"
 #include "as5600_app.h"
 
@@ -36,10 +36,7 @@ TaskHandle_t as5600_app_task_Handle;
 #define ORIGIN_COORDINATES_Y     1866
 #define RESOLUTION_RATIO         255.85
 static as5600_data as5600_data0,as5600_data1;
-uint16_t as5600_value,as5600_last_value0,as5600_last_value1,as5600_init_value0,as5600_init_value1;
-int as5600_dir,as5600_diff;
-float as5600_angle,as5600_total_angle;
-
+static int64_t as5600_time;
 static struct Nozzle
 {
     //绝对坐标
@@ -125,7 +122,9 @@ void as5600_app_monitor(){
             ,nozzle.x,nozzle.y);
 }
 void as5600_app_vofa_monitor(){
-    printf("%d,%d,%d,%d,%f,%f\n"
+
+    printf("%lld,%d,%d,%d,%d,%f,%f\n"
+    ,as5600_time
     ,as5600_data0.value,as5600_data0.total_value
     ,as5600_data1.value,as5600_data1.total_value
     ,nozzle.x,nozzle.y);
@@ -152,6 +151,7 @@ void as5600_app_task(void *arg){
                 ,as5600_data0.init_value,as5600_data1.init_value
                 ,as5600_data0.init_total_value,as5600_data1.init_total_value);
     while (1){
+        as5600_time = esp_timer_get_time();
         as5600_data0.value = as5600_dev_iic0_read();
         as5600_data1.value = as5600_dev_iic1_read();
         as5600_app_dev_measure(&as5600_data0);
