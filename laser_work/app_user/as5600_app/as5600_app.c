@@ -29,7 +29,8 @@ TaskHandle_t as5600_app_task_Handle;
 #define AS5600_ANGLE_L           0x0f
 #define AS5600_MAX_VALUE         4096
 
-#define RESOLUTION_RATIO         255.85
+#define RESOLUTION_RATIO         127.8
+#define SPEED_RATIO             60000
 //2D线激光运动平台
 static as5600_data laser;
 //挤出机称重
@@ -88,8 +89,9 @@ int as5600_get_total_value(uint16_t value,int circle, uint16_t init_total){
     return (int)circle*4096+value - init_total;
 }
 
-void as5600_get_speed(as5600_data *data){
-    data->speed = (data->total_value-data->last_total_value)/data->interval/RESOLUTION_RATIO;
+float as5600_get_speed(int total, int last_total, int interval){
+    float speed = (float)(total-last_total)/interval/RESOLUTION_RATIO*SPEED_RATIO;
+    return speed;
 }
 
 void as5600_app_task_init(){
@@ -98,33 +100,37 @@ void as5600_app_task_init(){
     weight.init_total_value = as5600_dev_iic1_read();
     weight.last_value = laser.init_total_value;
 }
+void as5600_app_monitor(){
+    //ESP_LOGI(TAG,"time:%lld,intervl:%d,total:%d",laser.time,laser.interval,laser.total_value);
+    //ESP_LOGI(TAG,"%f",laser.speed);
+    //ESP_LOGI(TAG,"total:%d  last_total:%d",laser.total_value,laser.last_total_value);
+    //ESP_LOGI(TAG,"total:%d delta:%f last:%f speed:%f",laser.total_value,deltaX,deltaX_last,speed);
+}
+void as5600_app_vofa_monitor(){
+    printf("%f\n",laser.speed);
+}
 
 void as5600_app_measure(as5600_data *data){
     data->direction = as5600_get_dir(data->value - data->last_value);
     data->circle = as5600_get_circle(data->direction,data->circle);
     data->total_value = as5600_get_total_value(data->value,data->circle,data->init_total_value);
+    data->speed = as5600_get_speed(data->total_value,data->last_total_value,data->interval);
     data->last_value = data->value;
     data->last_total_value = data->total_value;
 }
 
-void as5600_app_monitor(){
-    ESP_LOGI(TAG,"time:%lld,intervl:%d,total:%d",laser.time,laser.interval,laser.total_value);
-}
-void as5600_app_vofa_monitor(){
-    printf("%d\n",laser.total_value);
-}
 
 void as5600_app_task(void *arg){
     as5600_app_task_init();
     while (1){
-        laser.interval = esp_timer_get_time()-laser.time;
+        laser.interval = (esp_timer_get_time()-laser.time)/1000;
         laser.time = esp_timer_get_time();
         laser.value = as5600_dev_iic0_read();
-        weight.value = as5600_dev_iic1_read();
+        //weight.value = as5600_dev_iic1_read();
         as5600_app_measure(&laser);
-        as5600_app_measure(&weight);
-        as5600_app_monitor();
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        //as5600_app_measure(&weight);
+        as5600_app_vofa_monitor();
+        vTaskDelay(200 / portTICK_PERIOD_MS);
     }
 }
 

@@ -15,7 +15,7 @@ typedef struct
     uint8_t direction;
     //前一位置
     uint16_t last_value;
-    uint16_t last_total_value;
+    int last_total_value;
     //累计位置
     int total_value;
     int init_total_value;
