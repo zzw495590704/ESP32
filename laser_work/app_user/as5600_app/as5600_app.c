@@ -112,7 +112,7 @@ void as5600_app_monitor(){
     //ESP_LOGI(TAG,"total:%d delta:%f last:%f speed:%f",laser.total_value,deltaX,deltaX_last,speed);
 }
 void as5600_app_vofa_monitor(){
-    printf("%f,%lf\n",laser.speed,weight.weight);
+    printf("PRINT,%lf\n",weight.weight);
 }
 
 void as5600_app_measure_speed(as5600_data *data){
