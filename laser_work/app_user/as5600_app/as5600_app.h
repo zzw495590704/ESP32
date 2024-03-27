@@ -21,7 +21,9 @@ typedef struct
     int init_total_value;
     int circle;
     //速度
+    //TODO:修改成传感器的相对速度（目前是传动的绝对速度）,后续分离数据和传感器值
     float speed;
+    double weight;
     //时间
     int64_t time;
     int interval;

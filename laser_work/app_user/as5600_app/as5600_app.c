@@ -11,12 +11,11 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/stream_buffer.h"
-#include "driver/uart.h"
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "as5600_dev.h"
 #include "as5600_app.h"
-
+#include "algorithm_app.h"
 static const char *TAG = "as5600_app";
 TaskHandle_t as5600_app_task_Handle;
 #define I2C_MASTER_SCL0_IO           (GPIO_NUM_5)      /*!< GPIO number used for I2C master clock */
@@ -35,6 +34,9 @@ TaskHandle_t as5600_app_task_Handle;
 static as5600_data laser;
 //挤出机称重
 static as5600_data weight;
+//重量预测相关
+double coefficient = 5.85353152e-06;
+double intercept = -0.0742029745713122;
 
 float as5600_get_angle(uint16_t value){
     float angle;
@@ -93,7 +95,10 @@ float as5600_get_speed(int total, int last_total, int interval){
     float speed = (float)(total-last_total)/interval/RESOLUTION_RATIO*SPEED_RATIO;
     return speed;
 }
-
+// 定义函数来预测值
+double as5600_predict_weight(double x) {
+    return coefficient * x + intercept;
+}
 void as5600_app_task_init(){
     laser.init_total_value = as5600_dev_iic0_read();
     laser.last_value = laser.init_total_value;
@@ -107,16 +112,23 @@ void as5600_app_monitor(){
     //ESP_LOGI(TAG,"total:%d delta:%f last:%f speed:%f",laser.total_value,deltaX,deltaX_last,speed);
 }
 void as5600_app_vofa_monitor(){
-    printf("%f\n",laser.speed);
+    printf("%f,%lf\n",laser.speed,weight.weight);
 }
 
-void as5600_app_measure(as5600_data *data){
+void as5600_app_measure_speed(as5600_data *data){
     data->direction = as5600_get_dir(data->value - data->last_value);
     data->circle = as5600_get_circle(data->direction,data->circle);
     data->total_value = as5600_get_total_value(data->value,data->circle,data->init_total_value);
     data->speed = as5600_get_speed(data->total_value,data->last_total_value,data->interval);
     data->last_value = data->value;
     data->last_total_value = data->total_value;
+}
+
+void as5600_app_measure_weight(as5600_data *data){
+    data->direction = as5600_get_dir(data->value - data->last_value);
+    data->circle = as5600_get_circle(data->direction,data->circle);
+    data->total_value = as5600_get_total_value(data->value,data->circle,data->init_total_value);
+    data->weight =  as5600_predict_weight(data->total_value);
 }
 
 
@@ -126,10 +138,16 @@ void as5600_app_task(void *arg){
         laser.interval = (esp_timer_get_time()-laser.time)/1000;
         laser.time = esp_timer_get_time();
         laser.value = as5600_dev_iic0_read();
-        //weight.value = as5600_dev_iic1_read();
-        as5600_app_measure(&laser);
-        //as5600_app_measure(&weight);
-        as5600_app_vofa_monitor();
+        weight.value = as5600_dev_iic1_read();
+        as5600_app_measure_speed(&laser);
+        as5600_app_measure_weight(&weight);
+        if (algorithm_app_stable_speed(laser.speed,110,120,2))
+        {
+            printf("SCAN,%lf\n",weight.weight);
+        }
+        else{
+            as5600_app_vofa_monitor();
+        }
         vTaskDelay(200 / portTICK_PERIOD_MS);
     }
 }
