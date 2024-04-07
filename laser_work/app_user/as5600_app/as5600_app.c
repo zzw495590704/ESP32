@@ -112,7 +112,7 @@ void as5600_app_monitor(){
     //ESP_LOGI(TAG,"total:%d delta:%f last:%f speed:%f",laser.total_value,deltaX,deltaX_last,speed);
 }
 void as5600_app_vofa_monitor(){
-    printf("PRINT,%lf\n",weight.weight);
+    printf("PRINT,%lf %d\n",weight.weight,weight.value);
 }
 
 void as5600_app_measure_speed(as5600_data *data){
@@ -129,6 +129,8 @@ void as5600_app_measure_weight(as5600_data *data){
     data->circle = as5600_get_circle(data->direction,data->circle);
     data->total_value = as5600_get_total_value(data->value,data->circle,data->init_total_value);
     data->weight =  as5600_predict_weight(data->total_value);
+    data->last_value = data->value;
+    data->last_total_value = data->total_value;
 }
 
 
@@ -141,7 +143,8 @@ void as5600_app_task(void *arg){
         weight.value = as5600_dev_iic1_read();
         as5600_app_measure_speed(&laser);
         as5600_app_measure_weight(&weight);
-        if (algorithm_app_stable_speed(laser.speed,110,120,2))
+        //printf("%d\n",weight.value);
+        if (algorithm_app_stable_speed(laser.speed,110,130,2))
         {
             printf("SCAN,%lf\n",weight.weight);
         }

@@ -1,4 +1,6 @@
-#include "stdint.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <math.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/stream_buffer.h"
@@ -9,7 +11,8 @@
 
 uint8_t algorithm_app_stable_speed(float speed,int up, int ld, uint8_t th){
     static int s_times=0;
-    if(speed>110 && speed<130)
+    float temp = fabs(speed);
+    if((temp>up && temp<ld) || (temp>2*up && temp<2*ld))
         s_times++;
     if(s_times>th){
         s_times = 0;
