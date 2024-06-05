@@ -7,4 +7,4 @@ list(APPEND EXTRA_COMPONENT_DIRS
 )
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(uart_events)
+project(as5600_dev)

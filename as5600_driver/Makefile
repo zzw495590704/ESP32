@@ -3,6 +3,6 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := uart_events
+PROJECT_NAME := as5600_driver
 
 include $(IDF_PATH)/make/project.mk

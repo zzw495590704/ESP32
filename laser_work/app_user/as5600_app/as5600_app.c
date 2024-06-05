@@ -110,9 +110,10 @@ void as5600_app_monitor(){
     //ESP_LOGI(TAG,"%f",laser.speed);
     //ESP_LOGI(TAG,"total:%d  last_total:%d",laser.total_value,laser.last_total_value);
     //ESP_LOGI(TAG,"total:%d delta:%f last:%f speed:%f",laser.total_value,deltaX,deltaX_last,speed);
+    printf("PRINT,%lf %d\n",weight.weight,weight.value);
 }
 void as5600_app_vofa_monitor(){
-    printf("PRINT,%lf %d\n",weight.weight,weight.value);
+    printf("PRINT:%lf\n",laser.speed);
 }
 
 void as5600_app_measure_speed(as5600_data *data){
@@ -143,15 +144,16 @@ void as5600_app_task(void *arg){
         weight.value = as5600_dev_iic1_read();
         as5600_app_measure_speed(&laser);
         as5600_app_measure_weight(&weight);
-        //printf("%d\n",weight.value);
-        if (algorithm_app_stable_speed(laser.speed,110,130,2))
+        //printf("%d,%d,%lf\n",weight.value,weight.total_value,weight.weight);
+        if (algorithm_app_stable_speed(laser.speed,220,270,2))
         {
-            printf("SCAN,%lf\n",weight.weight);
+            printf("SCAN:%lf\n",weight.weight);
         }
         else{
+            // as5600_app_monitor();
             as5600_app_vofa_monitor();
         }
-        vTaskDelay(200 / portTICK_PERIOD_MS);
+        vTaskDelay(30 / portTICK_PERIOD_MS);
     }
 }
 
