@@ -107,7 +107,7 @@ void as5600_app_dev_measure(as5600_data *data){
     
     // data->totol_angle = as5600_get_total_angle(data->value,data->circle);
     data->total_value = as5600_get_total_value(data->value,data->circle,data->init_total_value);
-    data->last_value = data->value;
+    
 
     // ESP_LOGI(TAG, "angle:%f dir:%d circle:%d total:%.2f",data->angle,data->direction,data->circle,data->totol_angle);
 }
@@ -132,10 +132,30 @@ void as5600_app_vofa_monitor(){
 void as5600_app_get_coordinate(as5600_data *data0, as5600_data *data1){
     nozzle.delta_A = data0->total_value - data0->last_total_value;
     nozzle.delta_B = data1->total_value - data1->last_total_value;
-    nozzle.x = nozzle.x - (nozzle.delta_A + nozzle.delta_B)/RESOLUTION_RATIO;
-    nozzle.y = nozzle.y - (nozzle.delta_A - nozzle.delta_B)/RESOLUTION_RATIO;
+
+    // if(abs(nozzle.delta_A)<60 && abs(nozzle.delta_A-data0->delta)>150){
+    //     ESP_LOGE("A","[%d, %d]",nozzle.delta_A,data0->delta);
+    // }
+    // if(abs(nozzle.delta_B)<60 && abs(nozzle.delta_B-data1->delta)>150){
+    //     ESP_LOGE("B","[%d, %d]",nozzle.delta_B,data1->delta);
+    // }
+    int delta_x = (nozzle.delta_A + nozzle.delta_B);
+    int delta_y = (nozzle.delta_A - nozzle.delta_B);
+    nozzle.x = nozzle.x - (double)delta_x/RESOLUTION_RATIO;
+    nozzle.y = nozzle.y - (double)delta_y/RESOLUTION_RATIO;
+    // ESP_LOGE(TAG,"dir:[%d, %d], total:[%d,%d], value:[%d,%d]",
+    //                 delta_x,delta_y,nozzle.delta_A,nozzle.delta_B,
+    //                 data0->value-data0->last_value,data1->value-data1->last_value)
+    // printf("%d,%d,%d,%d,%d,%d\n",
+    //                 delta_x,delta_y,nozzle.delta_A,nozzle.delta_B,
+    //                 data0->value-data0->last_value,data1->value-data1->last_value);
     data0->last_total_value = data0->total_value;
     data1->last_total_value = data1->total_value;
+    data0->delta = nozzle.delta_A;
+    data1->delta = nozzle.delta_B;
+    data0->last_value = data0->value;
+    data1->last_value = data1->value;
+    
 }
 void as5600_app_task(void *arg){
     as5600_data0.last_value = as5600_dev_iic0_read();
@@ -154,6 +174,8 @@ void as5600_app_task(void *arg){
         as5600_app_dev_measure(&as5600_data0);
         as5600_app_dev_measure(&as5600_data1);
         as5600_app_get_coordinate(&as5600_data0,&as5600_data1);
+        // int64_t as5600_time_ = esp_timer_get_time();
+        // printf("%lld\n",as5600_time_-as5600_time);
         // as5600_app_monitor();
         as5600_app_vofa_monitor();
         // printf("as5600:%d,%d,%d,%d\n",

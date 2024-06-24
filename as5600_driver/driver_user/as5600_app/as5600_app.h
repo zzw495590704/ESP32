@@ -20,6 +20,7 @@ typedef struct
     int last_total_value;
     int init_total_value;
     int circle;
+    int delta;
     //角度换算
     float angle;
     float totol_angle;

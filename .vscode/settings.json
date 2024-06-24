@@ -7,6 +7,7 @@
         "string.h": "c",
         "stdlib.h": "c",
         "algorithm_app.h": "c",
-        "stdint.h": "c"
+        "stdint.h": "c",
+        "type_traits": "c"
     }
 }
