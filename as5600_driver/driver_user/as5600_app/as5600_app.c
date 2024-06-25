@@ -37,12 +37,13 @@ TaskHandle_t as5600_app_task_Handle;
 #define RESOLUTION_RATIO         255.85
 static as5600_data as5600_data0,as5600_data1;
 static int64_t as5600_time;
+static int time_10ms;
 static struct Nozzle
 {
     //绝对坐标
     double x; 
     double y;
-    //累计变化量
+    //累计变化�?
     int delta_A;
     int delta_B;
 }nozzle;
@@ -123,11 +124,11 @@ void as5600_app_monitor(){
 }
 void as5600_app_vofa_monitor(){
 
-    printf("%lld,%d,%d,%d,%d,%f,%f\n"
+    printf("%lld,%d,%d,%d,%d\n"
     ,as5600_time
     ,as5600_data0.value,as5600_data0.total_value
     ,as5600_data1.value,as5600_data1.total_value
-    ,nozzle.x,nozzle.y);
+    );
 }
 void as5600_app_get_coordinate(as5600_data *data0, as5600_data *data1){
     nozzle.delta_A = data0->total_value - data0->last_total_value;
@@ -157,6 +158,11 @@ void as5600_app_get_coordinate(as5600_data *data0, as5600_data *data1){
     data1->last_value = data1->value;
     
 }
+void as5600_time_interval(){
+    static int64_t now_time;
+    printf("interval:%lld\n",esp_timer_get_time()-now_time);
+    now_time = esp_timer_get_time();
+}
 void as5600_app_task(void *arg){
     as5600_data0.last_value = as5600_dev_iic0_read();
     as5600_data0.init_total_value = as5600_data0.last_value;
@@ -169,6 +175,7 @@ void as5600_app_task(void *arg){
                 ,as5600_data0.init_total_value,as5600_data1.init_total_value);
     while (1){
         as5600_time = esp_timer_get_time();
+        time_10ms++;
         as5600_data0.value = as5600_dev_iic0_read();
         as5600_data1.value = as5600_dev_iic1_read();
         as5600_app_dev_measure(&as5600_data0);
@@ -177,12 +184,14 @@ void as5600_app_task(void *arg){
         // int64_t as5600_time_ = esp_timer_get_time();
         // printf("%lld\n",as5600_time_-as5600_time);
         // as5600_app_monitor();
+        
         as5600_app_vofa_monitor();
+        // as5600_time_interval();
         // printf("as5600:%d,%d,%d,%d\n",
         // as5600_data0.value,as5600_data1.value,as5600_data0.total_value,as5600_data1.total_value);
         // printf("value0:%d,total0:%d,value1:%d,total1:%d\n",
         // as5600_data0.value,as5600_data0.total_value,as5600_data1.value,as5600_data1.total_value);
-        vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(1 / portTICK_PERIOD_MS);
     }
 }
 
