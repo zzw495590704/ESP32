@@ -27,7 +27,7 @@ typedef struct
 }as5600_data;
 
 void as5600_app_init();
-
+void as5600_app_measure();
 #ifdef __cplusplus
 }
 #endif
