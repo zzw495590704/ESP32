@@ -12,6 +12,7 @@
 #include "esp_log.h"
 #include "esp_timer.h"
 #include "as5600_app.h"
+#include "uart_dev.h"
 
 #ifdef __cplusplus
 extern "C" {

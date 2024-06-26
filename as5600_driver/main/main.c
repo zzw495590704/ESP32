@@ -16,8 +16,10 @@ void app_main(void)
     ledc_app_init();
     trigger_app_init();
     as5600_app_init();
+    
+    uart_dev_init();
     while (1){
     // ESP_LOGI("MAIN","bat:----------------%d%%----------------- ischarge:%d GPIO[%d]:%d",pwr_user_get_bat_percent(),pwr_user_is_charge(),PWR_CHARG_PIN,gpio_get_level(PWR_CHARG_PIN));
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }
