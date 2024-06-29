@@ -13,16 +13,21 @@
 #include "freertos/stream_buffer.h"
 #include "driver/uart.h"
 #include "esp_log.h"
-
+#include "esp_timer.h"
 
 static const char *TAG = "uart_events";
 // static const int RX_BUF_SIZE = 1024;
 StreamBufferHandle_t s_uart_steam_rx;
 
+
 #define EX_UART_NUM UART_NUM_1
 #define BUF_SIZE (1024)
 #define RD_BUF_SIZE (BUF_SIZE)
 static QueueHandle_t uart0_queue;
+uint8_t recieve_cmd[][2] = {
+    {0xa3,0x0d}
+};
+uint8_t send_data[8];
 
 static void uart_event_task(void *pvParameters)
 {
@@ -39,16 +44,17 @@ static void uart_event_task(void *pvParameters)
                 other types of events. If we take too much time on data event, the queue might
                 be full.*/
                 case UART_DATA:
-                  //   ESP_LOGI(TAG, "[UART DATA]: %d", event.size);
-                    uart_read_bytes(EX_UART_NUM, dtmp, event.size, portMAX_DELAY);
-                    // ESP_LOGI(TAG, "[DATA EVT]:");
-                    // uart_write_bytes(EX_UART_NUM, (const char*) dtmp, event.size);
-                  //   comm_user_rec_src_data(COMM_SEND_TYPE_USB,dtmp,event.size);
-                     if(event.size != xStreamBufferSend(s_uart_steam_rx,dtmp,event.size,10))
-                     {
-                        ESP_LOGE(TAG,"dtmp != xStreamBufferSend(s_uart_steam_rx,dtmp,event.size,10)");
-                     }
-                     
+                    // ESP_LOGI(TAG, "[UART DATA]: %d", event.size);
+                    uart_read_bytes(EX_UART_NUM, dtmp, event.size, portMAX_DELAY);   
+                    if (memcmp(recieve_cmd[0],  dtmp, sizeof(recieve_cmd[0])) == 0) {
+                        // printf("Arrays are equal\n");
+                        int64_t uart_dev_time = esp_timer_get_time();
+                        memcpy(send_data, &uart_dev_time, sizeof(int64_t));
+                        uart_write_bytes(EX_UART_NUM, (const char*) send_data, 8);
+                        ESP_LOGI(TAG, "[UART Time]: %lld", uart_dev_time);
+                        // uart_dev_send(uart_dev_time,8);
+                        // uart_dev_delete_buffer();
+                    } 
                     break;
                 //Event of HW FIFO overflow detected
                 case UART_FIFO_OVF:

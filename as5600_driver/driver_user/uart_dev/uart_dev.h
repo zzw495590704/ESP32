@@ -14,6 +14,8 @@ extern "C" {
 void uart_dev_init(void);
 void uart_dev_send(const void *buf,uint16_t len);
 uint16_t uart_dev_recive(void *buf,int len, uint32_t timeout_ms);
+uint16_t uart_dev_recive_wait(void *buf,int len);
+
 #ifdef __cplusplus
 }
 #endif

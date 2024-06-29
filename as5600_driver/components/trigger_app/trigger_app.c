@@ -27,21 +27,13 @@ static void gpio_task_example(void* arg)
         if(xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY)) {
             count++;
             as5600_app_measure();
-            if(count==5){
-                // ESP_LOGI("TAG:","send");
-                trigger_app_send_uart();
-                count=0;
-            }
+            
             // ESP_LOGI("TAG:","time:%lld, GPIO[%d] intr, val: %d",esp_timer_get_time(), io_num, gpio_get_level(io_num));
             // printf("GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
         }
     }
 }
 
-void trigger_app_send_uart(){
-    char s[5]="save\n";
-    uart_dev_send(s,5);
-}
 
 void trigger_app_init(void){
     ESP_LOGW(TAG,"trigger_app");
