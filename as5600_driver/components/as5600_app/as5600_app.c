@@ -201,13 +201,13 @@ void as5600_app_task(void *arg){
 }
 
 void as5600_app_measure(){
-    // as5600_time = esp_timer_get_time();
+    as5600_time = esp_timer_get_time();
     as5600_data0.value = as5600_dev_iic0_read();
     as5600_data1.value = as5600_dev_iic1_read();
     as5600_app_dev_measure(&as5600_data0);
     as5600_app_dev_measure(&as5600_data1);
     as5600_app_get_coordinate(&as5600_data0,&as5600_data1);
-    // as5600_app_vofa_monitor();
+    as5600_app_vofa_monitor();
 }
 
 void as5600_app_task_creat(void){
