@@ -3,6 +3,6 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := i2c-simple
+PROJECT_NAME := as5600_driver
 
 include $(IDF_PATH)/make/project.mk
